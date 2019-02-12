@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2008 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,14 +23,14 @@ import com.google.inject.Binding;
 import com.google.inject.Key;
 import com.google.inject.Scope;
 import com.google.inject.TypeLiteral;
-import com.google.inject.spi.ModuleAnnotatedMethodScanner;
 import com.google.inject.spi.ModuleAnnotatedMethodScannerBinding;
+import com.google.inject.spi.ProviderLookup;
 import com.google.inject.spi.ProvisionListenerBinding;
 import com.google.inject.spi.ScopeBinding;
 import com.google.inject.spi.TypeConverterBinding;
 import com.google.inject.spi.TypeListenerBinding;
-
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,101 +43,150 @@ import java.util.Set;
  */
 interface State {
 
-  static final State NONE = new State() {
-    public State parent() {
-      throw new UnsupportedOperationException();
-    }
+  static final State NONE =
+      new State() {
+        @Override
+        public State parent() {
+          throw new UnsupportedOperationException();
+        }
 
-    public <T> BindingImpl<T> getExplicitBinding(Key<T> key) {
-      return null;
-    }
+        @Override
+        public <T> BindingImpl<T> getExplicitBinding(Key<T> key) {
+          return null;
+        }
 
-    public Map<Key<?>, Binding<?>> getExplicitBindingsThisLevel() {
-      throw new UnsupportedOperationException();
-    }
+        @Override
+        public Map<Key<?>, Binding<?>> getExplicitBindingsThisLevel() {
+          throw new UnsupportedOperationException();
+        }
 
-    public void putBinding(Key<?> key, BindingImpl<?> binding) {
-      throw new UnsupportedOperationException();
-    }
+        @Override
+        public void putBinding(Key<?> key, BindingImpl<?> binding) {
+          throw new UnsupportedOperationException();
+        }
 
-    public ScopeBinding getScopeBinding(Class<? extends Annotation> scopingAnnotation) {
-      return null;
-    }
+        @Override
+        public void putProviderLookup(ProviderLookup<?> lookup) {
+          throw new UnsupportedOperationException();
+        }
 
-    public void putScopeBinding(Class<? extends Annotation> annotationType, ScopeBinding scope) {
-      throw new UnsupportedOperationException();
-    }
+        @Override
+        public List<ProviderLookup<?>> getProviderLookupsThisLevel() {
+          throw new UnsupportedOperationException();
+        }
 
-    public void addConverter(TypeConverterBinding typeConverterBinding) {
-      throw new UnsupportedOperationException();
-    }
+        @Override
+        public ScopeBinding getScopeBinding(Class<? extends Annotation> scopingAnnotation) {
+          return null;
+        }
 
-    public TypeConverterBinding getConverter(String stringValue, TypeLiteral<?> type, Errors errors,
-        Object source) {
-      throw new UnsupportedOperationException();
-    }
+        @Override
+        public void putScopeBinding(
+            Class<? extends Annotation> annotationType, ScopeBinding scope) {
+          throw new UnsupportedOperationException();
+        }
 
-    public Iterable<TypeConverterBinding> getConvertersThisLevel() {
-      return ImmutableSet.of();
-    }
+        @Override
+        public void addConverter(TypeConverterBinding typeConverterBinding) {
+          throw new UnsupportedOperationException();
+        }
 
-    /*if[AOP]*/
-    public void addMethodAspect(MethodAspect methodAspect) {
-      throw new UnsupportedOperationException();
-    }
+        @Override
+        public TypeConverterBinding getConverter(
+            String stringValue, TypeLiteral<?> type, Errors errors, Object source) {
+          throw new UnsupportedOperationException();
+        }
 
-    public ImmutableList<MethodAspect> getMethodAspects() {
-      return ImmutableList.of();
-    }
-    /*end[AOP]*/
+        @Override
+        public Iterable<TypeConverterBinding> getConvertersThisLevel() {
+          return ImmutableSet.of();
+        }
 
-    public void addTypeListener(TypeListenerBinding typeListenerBinding) {
-      throw new UnsupportedOperationException();
-    }
+        /*if[AOP]*/
+        @Override
+        public void addMethodAspect(MethodAspect methodAspect) {
+          throw new UnsupportedOperationException();
+        }
 
-    public List<TypeListenerBinding> getTypeListenerBindings() {
-      return ImmutableList.of();
-    }
-    
-    public void addProvisionListener(ProvisionListenerBinding provisionListenerBinding) {
-      throw new UnsupportedOperationException();
-    }
-    
-    public List<ProvisionListenerBinding> getProvisionListenerBindings() {
-      return ImmutableList.of();
-    }
+        @Override
+        public ImmutableList<MethodAspect> getMethodAspects() {
+          return ImmutableList.of();
+        }
+        /*end[AOP]*/
 
-    public void addScanner(ModuleAnnotatedMethodScannerBinding scanner) {
-      throw new UnsupportedOperationException();
-    }
+        @Override
+        public void addTypeListener(TypeListenerBinding typeListenerBinding) {
+          throw new UnsupportedOperationException();
+        }
 
-    public List<ModuleAnnotatedMethodScannerBinding> getScannerBindings() {
-      return ImmutableList.of();
-    }
+        @Override
+        public List<TypeListenerBinding> getTypeListenerBindings() {
+          return ImmutableList.of();
+        }
 
-    public void blacklist(Key<?> key, State state, Object source) {
-    }
+        @Override
+        public void addProvisionListener(ProvisionListenerBinding provisionListenerBinding) {
+          throw new UnsupportedOperationException();
+        }
 
-    public boolean isBlacklisted(Key<?> key) {
-      return true;
-    }
-    
-    public Set<Object> getSourcesForBlacklistedKey(Key<?> key) {
-      throw new UnsupportedOperationException();
-    }
+        @Override
+        public List<ProvisionListenerBinding> getProvisionListenerBindings() {
+          return ImmutableList.of();
+        }
 
-    public Object lock() {
-      throw new UnsupportedOperationException();
-    }
+        @Override
+        public void addScanner(ModuleAnnotatedMethodScannerBinding scanner) {
+          throw new UnsupportedOperationException();
+        }
 
-    public Object singletonCreationLock() {
-      throw new UnsupportedOperationException();
-    }
+        @Override
+        public List<ModuleAnnotatedMethodScannerBinding> getScannerBindings() {
+          return ImmutableList.of();
+        }
 
-    public Map<Class<? extends Annotation>, Scope> getScopes() {
-      return ImmutableMap.of();
-    }
-  };
+        @Override
+        public void blacklist(Key<?> key, State state, Object source) {}
+
+        @Override
+        public boolean isBlacklisted(Key<?> key) {
+          return true;
+        }
+
+        @Override
+        public Set<Object> getSourcesForBlacklistedKey(Key<?> key) {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Object lock() {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Map<Class<? extends Annotation>, Scope> getScopes() {
+          return ImmutableMap.of();
+        }
+
+        @Override
+        public List<ScopeBinding> getScopeBindingsThisLevel() {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<TypeListenerBinding> getTypeListenerBindingsThisLevel() {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<ProvisionListenerBinding> getProvisionListenerBindingsThisLevel() {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<ModuleAnnotatedMethodScannerBinding> getScannerBindingsThisLevel() {
+          throw new UnsupportedOperationException();
+        }
+      };
 
   State parent();
 
@@ -148,10 +197,16 @@ interface State {
   Map<Key<?>, Binding<?>> getExplicitBindingsThisLevel();
 
   void putBinding(Key<?> key, BindingImpl<?> binding);
- 
+
+  void putProviderLookup(ProviderLookup<?> lookup);
+
+  List<ProviderLookup<?>> getProviderLookupsThisLevel();
+
   ScopeBinding getScopeBinding(Class<? extends Annotation> scopingAnnotation);
 
   void putScopeBinding(Class<? extends Annotation> annotationType, ScopeBinding scope);
+
+  Collection<ScopeBinding> getScopeBindingsThisLevel();
 
   void addConverter(TypeConverterBinding typeConverterBinding);
 
@@ -169,16 +224,22 @@ interface State {
   /*end[AOP]*/
 
   void addTypeListener(TypeListenerBinding typeListenerBinding);
-  
+
   List<TypeListenerBinding> getTypeListenerBindings();
-  
+
+  List<TypeListenerBinding> getTypeListenerBindingsThisLevel();
+
   void addProvisionListener(ProvisionListenerBinding provisionListenerBinding);
-  
+
   List<ProvisionListenerBinding> getProvisionListenerBindings();
+
+  List<ProvisionListenerBinding> getProvisionListenerBindingsThisLevel();
 
   void addScanner(ModuleAnnotatedMethodScannerBinding scanner);
 
   List<ModuleAnnotatedMethodScannerBinding> getScannerBindings();
+
+  List<ModuleAnnotatedMethodScannerBinding> getScannerBindingsThisLevel();
 
   /**
    * Forbids the corresponding injector from creating a binding to {@code key}. Child injectors
@@ -192,7 +253,7 @@ interface State {
    * one of this injector's descendent's has bound the key.
    */
   boolean isBlacklisted(Key<?> key);
-  
+
   /** Returns the source of a blacklisted key. */
   Set<Object> getSourcesForBlacklistedKey(Key<?> key);
 
@@ -202,8 +263,6 @@ interface State {
    */
   Object lock();
 
-  /**
-   * Returns all the scope bindings at this level and parent levels.
-   */
+  /** Returns all the scope bindings at this level and parent levels. */
   Map<Class<? extends Annotation>, Scope> getScopes();
 }
