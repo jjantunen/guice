@@ -13,16 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.google.inject.persist.jpa;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
-import com.google.inject.persist.PersistService;
-import com.google.inject.persist.UnitOfWork;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -33,9 +25,16 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
+import com.google.inject.persist.PersistService;
+
 /** @author Dhanji R. Prasanna (dhanji@gmail.com) */
 @Singleton
-class JpaPersistService implements Provider<EntityManager>, UnitOfWork, PersistService {
+class JpaPersistService implements Provider<EntityManager>, PersistService {
   private final ThreadLocal<EntityManager> entityManager = new ThreadLocal<>();
 
   private final String persistenceUnitName;
@@ -64,22 +63,31 @@ class JpaPersistService implements Provider<EntityManager>, UnitOfWork, PersistS
     return em;
   }
 
-  public boolean isWorking() {
-    return entityManager.get() != null;
-  }
+  // begin always creates new entitymanager if it does not yet exists
+  void begin() {
+    // Preconditions.checkState(null == entityManager.get(),
+    // "Work already begun on this thread. Looks like you have called UnitOfWork.begin() twice"
+    // + " without a balancing call to end() in between.");
 
-  @Override
-  public void begin() {
-    Preconditions.checkState(
-        null == entityManager.get(),
-        "Work already begun on this thread. Looks like you have called UnitOfWork.begin() twice"
-            + " without a balancing call to end() in between.");
+    // Let's not penalize users for calling begin() multiple times.
+    if (isWorking()) {
+      return;
+    }
 
     entityManager.set(emFactory.createEntityManager());
   }
 
-  @Override
-  public void end() {
+  /**
+   * Clears old enitymanager when unitofwork begins
+   */
+  void beginNew() {
+    if (isWorking()) {
+      entityManager.get().clear();
+    }
+    begin();
+  }
+
+  void end() {
     EntityManager em = entityManager.get();
 
     // Let's not penalize users for calling end() multiple times.
@@ -92,6 +100,11 @@ class JpaPersistService implements Provider<EntityManager>, UnitOfWork, PersistS
     } finally {
       entityManager.remove();
     }
+  }
+
+  @VisibleForTesting
+  boolean isWorking() {
+    return entityManager.get() != null;
   }
 
   private volatile EntityManagerFactory emFactory;
@@ -138,5 +151,8 @@ class JpaPersistService implements Provider<EntityManager>, UnitOfWork, PersistS
   @Documented
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.PARAMETER)
-  private @interface Nullable {}
+  private @interface Nullable {
+  }
+
+
 }

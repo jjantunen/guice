@@ -1,20 +1,31 @@
 /*
  * Copyright (C) 2010 Google, Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package com.google.inject.persist.jpa;
+
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.List;
+import java.util.Map;
+
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+
+import org.aopalliance.intercept.MethodInterceptor;
+import org.aopalliance.intercept.MethodInvocation;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -26,14 +37,6 @@ import com.google.inject.persist.PersistService;
 import com.google.inject.persist.UnitOfWork;
 import com.google.inject.persist.finder.DynamicFinder;
 import com.google.inject.persist.finder.Finder;
-import java.lang.reflect.AccessibleObject;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.util.List;
-import java.util.Map;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
@@ -53,21 +56,26 @@ public final class JpaPersistModule extends PersistModule {
 
   private Map<?, ?> properties;
   private MethodInterceptor transactionInterceptor;
+  private MethodInterceptor requiresUnitOfWorkInterceptor;
 
   @Override
   protected void configurePersistence() {
     bindConstant().annotatedWith(Jpa.class).to(jpaUnit);
 
     bind(JpaPersistService.class).in(Singleton.class);
+    bind(UnitOfWorkService.class).in(Singleton.class);
 
     bind(PersistService.class).to(JpaPersistService.class);
-    bind(UnitOfWork.class).to(JpaPersistService.class);
+    bind(UnitOfWork.class).to(UnitOfWorkService.class);
     bind(EntityManager.class).toProvider(JpaPersistService.class);
     bind(EntityManagerFactory.class)
         .toProvider(JpaPersistService.EntityManagerFactoryProvider.class);
 
     transactionInterceptor = new JpaLocalTxnInterceptor();
     requestInjection(transactionInterceptor);
+
+    requiresUnitOfWorkInterceptor = new RequiresUnitOfWorkInterceptor();
+    requestInjection(requiresUnitOfWorkInterceptor);
 
     // Bind dynamic finders.
     for (Class<?> finder : dynamicFinders) {
@@ -78,6 +86,11 @@ public final class JpaPersistModule extends PersistModule {
   @Override
   protected MethodInterceptor getTransactionInterceptor() {
     return transactionInterceptor;
+  }
+
+  @Override
+  protected MethodInterceptor getRequiresUnitOfWorkInterceptor() {
+    return requiresUnitOfWorkInterceptor;
   }
 
   @Provides

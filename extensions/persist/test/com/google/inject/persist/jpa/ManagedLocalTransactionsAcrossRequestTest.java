@@ -1,20 +1,25 @@
 /*
  * Copyright (C) 2010 Google, Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package com.google.inject.persist.jpa;
+
+import java.io.IOException;
+import java.util.Date;
+
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.NoResultException;
 
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -24,13 +29,7 @@ import com.google.inject.persist.PersistService;
 import com.google.inject.persist.Transactional;
 import com.google.inject.persist.UnitOfWork;
 import com.google.inject.persist.finder.Finder;
-import java.io.IOException;
-import java.util.Date;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.NoResultException;
 import junit.framework.TestCase;
-
 /** @author Dhanji R. Prasanna (dhanji@gmail.com) */
 
 public class ManagedLocalTransactionsAcrossRequestTest extends TestCase {
@@ -45,7 +44,7 @@ public class ManagedLocalTransactionsAcrossRequestTest extends TestCase {
   public void setUp() {
     injector = Guice.createInjector(new JpaPersistModule("testUnit"));
 
-    //startup persistence
+    // startup persistence
     injector.getInstance(PersistService.class).start();
   }
 
@@ -60,7 +59,7 @@ public class ManagedLocalTransactionsAcrossRequestTest extends TestCase {
     EntityManager em = injector.getInstance(EntityManager.class);
     assertFalse(em.getTransaction().isActive());
 
-    //test that the data has been stored
+    // test that the data has been stored
     Object result =
         em.createQuery("from JpaTestEntity where text = :text")
             .setParameter("text", UNIQUE_TEXT)
@@ -77,6 +76,10 @@ public class ManagedLocalTransactionsAcrossRequestTest extends TestCase {
   }
 
   public void testSimpleTransactionWithMerge() {
+
+    // pretend that the request was started here
+    injector.getInstance(UnitOfWork.class).begin();
+
     EntityManager emOrig = injector.getInstance(EntityManager.class);
     JpaTestEntity entity =
         injector.getInstance(TransactionalObject.class).runOperationInTxnWithMerge();
@@ -86,7 +89,7 @@ public class ManagedLocalTransactionsAcrossRequestTest extends TestCase {
     EntityManager em = injector.getInstance(EntityManager.class);
     assertFalse(em.getTransaction().isActive());
 
-    //test that the data has been stored
+    // test that the data has been stored
     assertTrue("Em was closed after txn!", em.isOpen());
     assertEquals("Em was not kept open across txns", emOrig, em);
     assertTrue("Merge did not store state or did not return persistent copy", em.contains(entity));
@@ -114,7 +117,7 @@ public class ManagedLocalTransactionsAcrossRequestTest extends TestCase {
     EntityManager em = injector.getInstance(EntityManager.class);
     assertFalse("txn was not closed by transactional service", em.getTransaction().isActive());
 
-    //test that the data has been stored
+    // test that the data has been stored
     assertTrue("Em was closed after txn!", em.isOpen());
     assertEquals("Em was not kept open across txns", emOrig, em);
     assertTrue("Merge did not store state or did not return persistent copy", em.contains(entity));
@@ -136,7 +139,7 @@ public class ManagedLocalTransactionsAcrossRequestTest extends TestCase {
     try {
       injector.getInstance(TransactionalObject.class).runOperationInTxnThrowingChecked();
     } catch (IOException e) {
-      //ignore
+      // ignore
       injector.getInstance(UnitOfWork.class).end();
     }
 
@@ -146,7 +149,7 @@ public class ManagedLocalTransactionsAcrossRequestTest extends TestCase {
         "Previous EM was not closed by transactional service (rollback didnt happen?)",
         em.getTransaction().isActive());
 
-    //test that the data has been stored
+    // test that the data has been stored
     try {
       Object result =
           em.createQuery("from JpaTestEntity where text = :text")
@@ -164,7 +167,7 @@ public class ManagedLocalTransactionsAcrossRequestTest extends TestCase {
     try {
       injector.getInstance(TransactionalObject.class).runOperationInTxnThrowingUnchecked();
     } catch (RuntimeException re) {
-      //ignore
+      // ignore
       injector.getInstance(UnitOfWork.class).end();
     }
 
